@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from database import get_db
-from models import Publication, User, UserRole
-from schemas import PublicationCreate, PublicationResponse, PublicationUpdate
-from auth import get_current_user
+from ..database import get_db
+from ..models import Publication, User, UserRole
+from ..schemas import PublicationCreate, PublicationResponse, PublicationUpdate
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/publications", tags=["publications"])
 
@@ -17,7 +17,7 @@ def create_publication(
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    db_publication = Publication(**publication.dict())
+    db_publication = Publication(**publication.model_dump())
     db.add(db_publication)
     db.commit()
     db.refresh(db_publication)
@@ -57,7 +57,7 @@ def update_publication(
     if not db_publication:
         raise HTTPException(status_code=404, detail="Publication not found")
     
-    for key, value in publication_update.dict(exclude_unset=True).items():
+    for key, value in publication_update.model_dump(exclude_unset=True).items():
         setattr(db_publication, key, value)
     
     db.commit()

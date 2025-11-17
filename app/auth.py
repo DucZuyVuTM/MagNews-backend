@@ -1,13 +1,14 @@
+import os
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from database import get_db
-from models import User
+from .database import get_db
+from .models import User
 
-SECRET_KEY = "your-secret-key-change-in-production"
+SECRET_KEY = os.getenv("DATABASE_URL", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

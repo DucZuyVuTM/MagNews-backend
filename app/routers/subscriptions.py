@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
-from database import get_db
-from models import Subscription, Publication, User, SubscriptionStatus
-from schemas import SubscriptionCreate, SubscriptionResponse
-from auth import get_current_user
+from ..database import get_db
+from ..models import Subscription, Publication, User, SubscriptionStatus
+from ..schemas import SubscriptionCreate, SubscriptionResponse
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
 
