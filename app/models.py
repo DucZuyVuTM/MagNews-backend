@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 from .database import Base
 
@@ -27,7 +27,7 @@ class User(Base):
     full_name = Column(String)
     role = Column(Enum(UserRole), default=UserRole.USER)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
     
     subscriptions = relationship("Subscription", back_populates="user")
 
@@ -43,8 +43,9 @@ class Publication(Base):
     price_monthly = Column(Float, nullable=False)
     price_yearly = Column(Float, nullable=False)
     cover_image_url = Column(String)
+    is_visible = Column(Boolean, default=True)
     is_available = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
     
     subscriptions = relationship("Subscription", back_populates="publication")
 
@@ -59,7 +60,7 @@ class Subscription(Base):
     status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE)
     price = Column(Float, nullable=False)
     auto_renew = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
     
     user = relationship("User", back_populates="subscriptions")
     publication = relationship("Publication", back_populates="subscriptions")

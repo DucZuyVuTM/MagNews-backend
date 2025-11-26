@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from ..database import get_db
 from ..models import Subscription, Publication, User, SubscriptionStatus
 from ..schemas import SubscriptionCreate, SubscriptionResponse
@@ -39,7 +39,7 @@ def create_subscription(
     else:
         price = publication.price_monthly * subscription.duration_months
     
-    start_date = datetime.utcnow()
+    start_date = datetime.now(timezone.utc)
     end_date = start_date + timedelta(days=30 * subscription.duration_months)
     
     db_subscription = Subscription(

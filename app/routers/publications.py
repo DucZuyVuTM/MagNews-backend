@@ -30,17 +30,43 @@ def list_publications(
     type: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Publication).filter(Publication.is_available == True)
+    query = db.query(Publication).filter(
+        Publication.is_available == True,
+        Publication.is_visible == True
+    )
+    
     if type:
         query = query.filter(Publication.type == type)
     publications = query.offset(skip).limit(limit).all()
     return publications
 
+@router.get("/all", response_model=List[PublicationResponse])
+def list_all_for_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    publications = db.query(Publication).filter(
+        Publication.is_available == True
+    )
+    return publications
+
 @router.get("/{publication_id}", response_model=PublicationResponse)
-def get_publication(publication_id: int, db: Session = Depends(get_db)):
+def get_publication(
+    publication_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
+):
     publication = db.query(Publication).filter(Publication.id == publication_id).first()
-    if not publication:
+    if not publication or not publication.is_available:
         raise HTTPException(status_code=404, detail="Publication not found")
+
+    if not publication.is_visible:
+        if not current_user or current_user.role != UserRole.ADMIN:
+            raise HTTPException(status_code=404, detail="Publication not found")
+
     return publication
 
 @router.put("/{publication_id}", response_model=PublicationResponse)
@@ -77,5 +103,6 @@ def delete_publication(
     if not db_publication:
         raise HTTPException(status_code=404, detail="Publication not found")
     
+    db_publication.is_visible = False
     db_publication.is_available = False
     db.commit()

@@ -43,10 +43,12 @@ class PublicationUpdate(BaseModel):
     description: Optional[str] = None
     price_monthly: Optional[float] = None
     price_yearly: Optional[float] = None
+    is_visible: Optional[bool] = None
     is_available: Optional[bool] = None
 
 class PublicationResponse(PublicationBase):
     id: int
+    is_visible: bool
     is_available: bool
     created_at: datetime
     
