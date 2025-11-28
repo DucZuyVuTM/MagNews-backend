@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
@@ -9,9 +10,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
+PRODUCTION_ORIGIN = os.getenv("PRODUCTION_ORIGIN", "http://localhost:5173")
+
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    PRODUCTION_ORIGIN
 ]
 
 # CORS middleware
