@@ -41,8 +41,12 @@ class PublicationCreate(PublicationBase):
 class PublicationUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    type: Optional[str] = None
+    publisher: Optional[str] = None
+    frequency: Optional[str] = None
     price_monthly: Optional[float] = None
     price_yearly: Optional[float] = None
+    cover_image_url: Optional[str] = None
     is_visible: Optional[bool] = None
     is_available: Optional[bool] = None
 
