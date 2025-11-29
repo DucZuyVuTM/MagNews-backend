@@ -66,7 +66,8 @@ def get_my_subscriptions(
 ):
     subscriptions = db.query(Subscription).filter(
         Subscription.user_id == current_user.id
-    ).all()
+    ).order_by(Subscription.created_at.desc())
+
     return subscriptions
 
 @router.delete("/{subscription_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -28,20 +28,24 @@ def create_publication(
 
 @router.get("/", response_model=List[PublicationResponse])
 def list_publications(
-    skip: int = 0,
-    limit: int = Query(default=50, le=100),
+    skip: Optional[int] = None,
+    limit: Optional[int] = None,
     type: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Publication).filter(
         Publication.is_available == True,
         Publication.is_visible == True
-    ).order_by(Publication.created_at)
+    ).order_by(Publication.created_at.desc())
     
-    if type:
+    if type is not None:
         query = query.filter(Publication.type == type)
-    publications = query.offset(skip).limit(limit).all()
-    return publications
+    if skip is not None:
+        query = query.offset(skip)
+    if limit is not None:
+        query = query.limit(limit)
+
+    return query
 
 @router.get("/all", response_model=List[PublicationResponse])
 def list_all_for_admin(
@@ -53,7 +57,7 @@ def list_all_for_admin(
 
     publications = db.query(Publication).filter(
         Publication.is_available == True
-    ).order_by(Publication.created_at)
+    ).order_by(Publication.created_at.desc())
 
     return publications
 
