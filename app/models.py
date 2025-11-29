@@ -26,9 +26,9 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
-    role = Column(Enum(UserRole), default=UserRole.USER)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     subscriptions = relationship("Subscription", back_populates="user")
 
@@ -44,9 +44,9 @@ class Publication(Base):
     price_monthly = Column(Float, nullable=False)
     price_yearly = Column(Float, nullable=False)
     cover_image_url = Column(String)
-    is_visible = Column(Boolean, default=True)
-    is_available = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    is_visible = Column(Boolean, default=True, nullable=False)
+    is_available = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     subscriptions = relationship("Subscription", back_populates="publication")
 
@@ -58,10 +58,10 @@ class Subscription(Base):
     publication_id = Column(Integer, ForeignKey("publications.id"), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
-    status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE)
+    status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE, nullable=False)
     price = Column(Float, nullable=False)
-    auto_renew = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    auto_renew = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     user = relationship("User", back_populates="subscriptions")
     publication = relationship("Publication", back_populates="subscriptions")
