@@ -36,7 +36,7 @@ def list_publications(
     query = db.query(Publication).filter(
         Publication.is_available == True,
         Publication.is_visible == True
-    )
+    ).order_by(Publication.created_at)
     
     if type:
         query = query.filter(Publication.type == type)
@@ -53,7 +53,8 @@ def list_all_for_admin(
 
     publications = db.query(Publication).filter(
         Publication.is_available == True
-    )
+    ).order_by(Publication.created_at)
+
     return publications
 
 @router.get("/{publication_id}", response_model=PublicationResponse)
@@ -63,6 +64,7 @@ def get_publication(
     current_user: Optional[User] = Depends(get_current_user)
 ):
     publication = db.query(Publication).filter(Publication.id == publication_id).first()
+
     if not publication or not publication.is_available:
         raise HTTPException(status_code=404, detail="Publication not found")
 
@@ -89,7 +91,13 @@ def update_publication(
     if not db_publication:
         raise HTTPException(status_code=404, detail="Publication not found")
 
-    for key, value in publication_update.model_dump(exclude_unset=True).items():
+    update_data = publication_update.model_dump(exclude_none=True)
+
+    for key, value in update_data.items():
+        if isinstance(value, str) and value.strip() == "":
+            update_data[key] = None
+
+    for key, value in update_data.items():
         setattr(db_publication, key, value)
 
     db.commit()
