@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
@@ -78,7 +78,7 @@ def get_publication(
 
     return publication
 
-@router.put("/{publication_id}", response_model=PublicationResponse)
+@router.patch("/{publication_id}", response_model=PublicationResponse)
 def update_publication(
     publication_id: int,
     publication_update: PublicationUpdate,
