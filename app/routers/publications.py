@@ -16,7 +16,10 @@ def create_publication(
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User is deactivated")
+
     db_publication = Publication(**publication.model_dump())
     db.add(db_publication)
     db.commit()
@@ -47,7 +50,7 @@ def list_all_for_admin(
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     publications = db.query(Publication).filter(
         Publication.is_available == True
     )
@@ -78,14 +81,17 @@ def update_publication(
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User is deactivated")
+
     db_publication = db.query(Publication).filter(Publication.id == publication_id).first()
     if not db_publication:
         raise HTTPException(status_code=404, detail="Publication not found")
-    
+
     for key, value in publication_update.model_dump(exclude_unset=True).items():
         setattr(db_publication, key, value)
-    
+
     db.commit()
     db.refresh(db_publication)
     return db_publication
@@ -98,11 +104,14 @@ def delete_publication(
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User is deactivated")
+
     db_publication = db.query(Publication).filter(Publication.id == publication_id).first()
     if not db_publication:
         raise HTTPException(status_code=404, detail="Publication not found")
-    
+
     db_publication.is_visible = False
     db_publication.is_available = False
     db.commit()

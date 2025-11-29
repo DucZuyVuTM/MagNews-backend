@@ -20,7 +20,7 @@ class UserResponse(UserBase):
     role: str
     is_active: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -55,7 +55,7 @@ class PublicationResponse(PublicationBase):
     is_visible: bool
     is_available: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -76,7 +76,7 @@ class SubscriptionResponse(BaseModel):
     auto_renew: bool
     created_at: datetime
     publication: PublicationResponse
-    
+
     class Config:
         from_attributes = True
 

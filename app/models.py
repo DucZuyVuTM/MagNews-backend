@@ -11,6 +11,7 @@ class UserRole(str, enum.Enum):
 class PublicationType(str, enum.Enum):
     MAGAZINE = "magazine"
     NEWSPAPER = "newspaper"
+    JOURNAL = "journal"
 
 class SubscriptionStatus(str, enum.Enum):
     ACTIVE = "active"
@@ -19,7 +20,7 @@ class SubscriptionStatus(str, enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -28,12 +29,12 @@ class User(Base):
     role = Column(Enum(UserRole), default=UserRole.USER)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    
+
     subscriptions = relationship("Subscription", back_populates="user")
 
 class Publication(Base):
     __tablename__ = "publications"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, index=True)
     description = Column(Text)
@@ -46,12 +47,12 @@ class Publication(Base):
     is_visible = Column(Boolean, default=True)
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    
+
     subscriptions = relationship("Subscription", back_populates="publication")
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     publication_id = Column(Integer, ForeignKey("publications.id"), nullable=False)
@@ -61,6 +62,6 @@ class Subscription(Base):
     price = Column(Float, nullable=False)
     auto_renew = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    
+
     user = relationship("User", back_populates="subscriptions")
     publication = relationship("Publication", back_populates="subscriptions")
