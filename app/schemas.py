@@ -53,6 +53,9 @@ class ChangePassword(BaseModel):
             raise ValueError("Password does not match")
         return v
 
+    class Config:
+        populate_by_name = True
+
 class ChangePasswordResponse(BaseModel):
     message: str = "Password changed successfully"
 

@@ -14,6 +14,13 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
 
+    if not any(c.isupper() for c in user.password):
+        raise HTTPException(status_code=400, detail="Password must contain at least 1 uppercase letter")
+    if not any(c.islower() for c in user.password):
+        raise HTTPException(status_code=400, detail="Password must contain at least 1 lowercase letter")
+    if not any(c.isdigit() for c in user.password):
+        raise HTTPException(status_code=400, detail="Password must contain at least 1 number")
+
     db_user = User(
         email=user.email,
         username=user.username,
