@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from ..database import get_db
 from ..models import User
-from ..schemas import UserCreate, UserResponse, Token
-from ..auth import get_password_hash, verify_password, create_access_token, get_current_user
+from ..schemas import UserCreate, UserUpdate, UserResponse, ChangePassword, ChangePasswordResponse, Token
+from ..auth import pwd_context, get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -41,3 +41,52 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.patch("/me", response_model=UserResponse)
+def update_current_user_profile(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):    
+    update_data = user_update.model_dump(exclude_none=True)
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No information has been submitted for update"
+        )
+
+    if "username" in update_data:
+        if db.query(User).filter(
+            User.username == update_data["username"],
+            User.id != current_user.id
+        ).first():
+            raise HTTPException(
+                status_code=400,
+                detail="Username already taken"
+            )
+
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.post("/me/change-password", response_model=ChangePasswordResponse)
+def change_password(
+    payload: ChangePassword,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not pwd_context.verify(payload.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    hashed_new_password = pwd_context.hash(payload.new_password)
+
+    current_user.hashed_password = hashed_new_password
+    db.commit()
+
+    return ChangePasswordResponse()

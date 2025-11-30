@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from datetime import datetime
 from typing import Optional
 
@@ -15,6 +15,13 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    
+    class Config:
+        extra = "forbid"
+
 class UserResponse(UserBase):
     id: int
     role: str
@@ -23,6 +30,31 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+# Schemas for Changing Password
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=100)
+    confirm_new_password: str
+
+    @validator("new_password")
+    def password_strength(cls, v):
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least 1 uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least 1 lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least 1 number")
+        return v
+
+    @validator("confirm_new_password")
+    def passwords_match(cls, v, values):
+        if "new_password" in values and v != values["new_password"]:
+            raise ValueError("Password does not match")
+        return v
+
+class ChangePasswordResponse(BaseModel):
+    message: str = "Password changed successfully"
 
 # Publication Schemas
 class PublicationBase(BaseModel):
