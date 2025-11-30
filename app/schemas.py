@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from pydantic import BaseModel, EmailStr, Field, validator
 from datetime import datetime
 from typing import Optional
@@ -9,7 +10,17 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8, max_length=100)
+
+    @validator("password")
+    def password_strength(cls, v):
+        if not any(c.isupper() for c in v):
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 uppercase letter")
+        if not any(c.islower() for c in v):
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 number")
+        return v
 
 class UserLogin(BaseModel):
     username: str
@@ -35,22 +46,15 @@ class UserResponse(UserBase):
 class ChangePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
-    confirm_new_password: str
 
     @validator("new_password")
     def password_strength(cls, v):
         if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least 1 uppercase letter")
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 uppercase letter")
         if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least 1 lowercase letter")
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 lowercase letter")
         if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least 1 number")
-        return v
-
-    @validator("confirm_new_password")
-    def passwords_match(cls, v, values):
-        if "new_password" in values and v != values["new_password"]:
-            raise ValueError("Password does not match")
+            raise HTTPException(status_code=400, detail="Password must contain at least 1 number")
         return v
 
     class Config:

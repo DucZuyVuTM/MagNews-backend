@@ -20,7 +20,13 @@ def create_publication(
     if not current_user.is_active:
         raise HTTPException(status_code=403, detail="User is deactivated")
 
-    db_publication = Publication(**publication.model_dump())
+    created_data = publication.model_dump()
+
+    for key, value in created_data.items():
+        if isinstance(value, str) and value.strip() == "":
+            created_data[key] = None
+
+    db_publication = Publication(**created_data)
     db.add(db_publication)
     db.commit()
     db.refresh(db_publication)
