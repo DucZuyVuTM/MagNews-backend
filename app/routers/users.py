@@ -41,7 +41,7 @@ def login(
             detail="Incorrect username or password"
         )
 
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
@@ -78,7 +78,7 @@ def update_current_user_profile(
     db.refresh(current_user)
     return current_user
 
-@router.post("/me/change-password", response_model=ChangePasswordResponse)
+@router.post("/me/password", response_model=ChangePasswordResponse)
 def change_password(
     payload: ChangePassword,
     db: Session = Depends(get_db),
