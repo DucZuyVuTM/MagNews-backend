@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
-from ..models import Publication, User, UserRole
+from ..models import Publication, PublicationType, User, UserRole
 from ..schemas import PublicationCreate, PublicationResponse, PublicationUpdate
 from ..auth import get_current_user
 
@@ -36,7 +36,7 @@ def create_publication(
 def list_publications(
     skip: Optional[int] = None,
     limit: Optional[int] = None,
-    type: Optional[str] = None,
+    type: Optional[PublicationType] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Publication).filter(
