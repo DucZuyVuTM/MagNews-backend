@@ -1,135 +1,63 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+
 from ..database import get_db
-from ..models import Publication, PublicationType, User, UserRole
-from ..schemas import PublicationCreate, PublicationResponse, PublicationUpdate
 from ..auth import get_current_user
+from ..models import User, PublicationType
+from ..schemas import PublicationCreate, PublicationUpdate, PublicationResponse
+from ..services.publication_service import PublicationService
 
 router = APIRouter(prefix="/api/publications", tags=["publications"])
+
+def get_publication_service(db: Session = Depends(get_db)):
+    return PublicationService(db)
 
 @router.post("/", response_model=PublicationResponse, status_code=status.HTTP_201_CREATED)
 def create_publication(
     publication: PublicationCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service)
 ):
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="User is deactivated")
-
-    created_data = publication.model_dump()
-
-    for key, value in created_data.items():
-        if isinstance(value, str) and value.strip() == "":
-            created_data[key] = None
-
-    db_publication = Publication(**created_data)
-    db.add(db_publication)
-    db.commit()
-    db.refresh(db_publication)
-    return db_publication
+    return service.create(publication, current_user)
 
 @router.get("/", response_model=List[PublicationResponse])
 def list_publications(
     skip: Optional[int] = None,
     limit: Optional[int] = None,
     type: Optional[PublicationType] = None,
-    db: Session = Depends(get_db)
+    service: PublicationService = Depends(get_publication_service)
 ):
-    query = db.query(Publication).filter(
-        Publication.is_available == True,
-        Publication.is_visible == True
-    ).order_by(Publication.created_at.desc())
-    
-    if type is not None:
-        query = query.filter(Publication.type == type)
-    if skip is not None:
-        query = query.offset(skip)
-    if limit is not None:
-        query = query.limit(limit)
-
-    return query
+    return service.get_list(skip, limit, type)
 
 @router.get("/all", response_model=List[PublicationResponse])
 def list_all_for_admin(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service)
 ):
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    publications = db.query(Publication).filter(
-        Publication.is_available == True
-    ).order_by(Publication.created_at.desc())
-
-    return publications
+    return service.get_list_admin(current_user)
 
 @router.get("/{publication_id}", response_model=PublicationResponse)
 def get_publication(
     publication_id: int,
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service)
 ):
-    publication = db.query(Publication).filter(Publication.id == publication_id).first()
-
-    if not publication or not publication.is_available:
-        raise HTTPException(status_code=404, detail="Publication not found")
-
-    if not publication.is_visible:
-        if not current_user or current_user.role != UserRole.ADMIN:
-            raise HTTPException(status_code=404, detail="Publication not found")
-
-    return publication
+    return service.get_by_id(publication_id, current_user)
 
 @router.patch("/{publication_id}", response_model=PublicationResponse)
 def update_publication(
     publication_id: int,
     publication_update: PublicationUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service)
 ):
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="User is deactivated")
-
-    db_publication = db.query(Publication).filter(Publication.id == publication_id).first()
-    if not db_publication:
-        raise HTTPException(status_code=404, detail="Publication not found")
-
-    update_data = publication_update.model_dump(exclude_none=True)
-
-    for key, value in update_data.items():
-        if isinstance(value, str) and value.strip() == "":
-            update_data[key] = None
-
-    for key, value in update_data.items():
-        setattr(db_publication, key, value)
-
-    db.commit()
-    db.refresh(db_publication)
-    return db_publication
+    return service.update(publication_id, publication_update, current_user)
 
 @router.delete("/{publication_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_publication(
     publication_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service)
 ):
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="User is deactivated")
-
-    db_publication = db.query(Publication).filter(Publication.id == publication_id).first()
-    if not db_publication:
-        raise HTTPException(status_code=404, detail="Publication not found")
-
-    db_publication.is_visible = False
-    db_publication.is_available = False
-    db.commit()
+    return service.soft_delete(publication_id, current_user)

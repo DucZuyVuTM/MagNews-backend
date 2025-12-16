@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, validator
 from datetime import datetime
 from typing import Optional
 
@@ -30,8 +30,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     full_name: Optional[str] = None
     
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 class UserResponse(UserBase):
     id: int
@@ -39,8 +38,7 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Schemas for Changing Password
 class ChangePassword(BaseModel):
@@ -57,8 +55,7 @@ class ChangePassword(BaseModel):
             raise HTTPException(status_code=400, detail="Password must contain at least 1 number")
         return v
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class ChangePasswordResponse(BaseModel):
     message: str = "Password changed successfully"
@@ -95,8 +92,7 @@ class PublicationResponse(PublicationBase):
     is_available: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Subscription Schemas
 class SubscriptionCreate(BaseModel):
@@ -116,8 +112,8 @@ class SubscriptionResponse(BaseModel):
     created_at: datetime
     publication: PublicationResponse
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class Token(BaseModel):
     access_token: str
