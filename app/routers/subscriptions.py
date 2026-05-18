@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from ..database import get_db
 from ..auth import get_current_user
@@ -35,3 +35,13 @@ def cancel_subscription(
     service: SubscriptionService = Depends(get_subscription_service)
 ):
     return service.cancel(subscription_id, current_user)
+
+
+@router.patch("/{subscription_id}/block", response_model=SubscriptionResponse)
+def block_subscription(
+    subscription_id: int,
+    reason: Optional[str] = Body(default=None, embed=True),
+    current_user: User = Depends(get_current_user),
+    service: SubscriptionService = Depends(get_subscription_service),
+):
+    return service.block(subscription_id, current_user, reason)

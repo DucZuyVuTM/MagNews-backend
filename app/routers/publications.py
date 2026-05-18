@@ -26,9 +26,10 @@ def list_publications(
     skip: Optional[int] = None,
     limit: Optional[int] = None,
     type: Optional[PublicationType] = None,
+    q: Optional[str] = None,
     service: PublicationService = Depends(get_publication_service)
 ):
-    return service.get_list(skip, limit, type)
+    return service.get_list(skip, limit, type, q)
 
 @router.get("/all", response_model=List[PublicationResponse])
 def list_all_for_admin(

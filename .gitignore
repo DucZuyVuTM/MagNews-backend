@@ -1,6 +1,8 @@
 __pycache__/
 .venv/
 venv/
+.pytest_cache/
+*.db
 
 dev_reset_db.py
 .env

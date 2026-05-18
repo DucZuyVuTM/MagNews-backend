@@ -32,7 +32,8 @@ class PublicationService:
         self,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
-        type_filter: Optional[PublicationType] = None
+        type_filter: Optional[PublicationType] = None,
+        q: Optional[str] = None,
     ) -> List[PublicationResponse]:
         query = self.db.query(Publication).filter(
             Publication.is_available == True,
@@ -41,6 +42,13 @@ class PublicationService:
 
         if type_filter is not None:
             query = query.filter(Publication.type == type_filter)
+        if q is not None and q.strip():
+            pattern = f"%{q.strip()}%"
+            query = query.filter(
+                (Publication.title.ilike(pattern))
+                | (Publication.description.ilike(pattern))
+                | (Publication.publisher.ilike(pattern))
+            )
         if skip is not None:
             query = query.offset(skip)
         if limit is not None:
