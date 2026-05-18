@@ -6,3 +6,5 @@ venv/
 
 dev_reset_db.py
 .env
+test_uploads/
+uploads/

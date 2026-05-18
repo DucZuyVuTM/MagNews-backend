@@ -1,7 +1,18 @@
 import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import users, publications, subscriptions, complaints, reviews
+from fastapi.staticfiles import StaticFiles
+
+from .routers import (
+    complaints,
+    publications,
+    reviews,
+    subscriptions,
+    uploads,
+    users,
+)
 
 app = FastAPI(
     title="MagNews Subscription Marketplace API",
@@ -28,12 +39,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static files: cover image storage exposed under /static
+UPLOAD_ROOT = Path(os.getenv("UPLOAD_ROOT", "/app/uploads"))
+(UPLOAD_ROOT / "covers").mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(UPLOAD_ROOT)), name="static")
+
 # Include routers
 app.include_router(users.router)
 app.include_router(publications.router)
 app.include_router(subscriptions.router)
 app.include_router(complaints.router)
 app.include_router(reviews.router)
+app.include_router(uploads.router)
 
 @app.get("/")
 def root():

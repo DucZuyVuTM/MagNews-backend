@@ -191,6 +191,11 @@ class PublicationRatingSummary(BaseModel):
     review_count: int
 
 
+# Upload schemas
+class CoverUploadResponse(BaseModel):
+    url: str
+
+
 # Search params for publications
 class PublicationListQuery(BaseModel):
     skip: Optional[int] = None
