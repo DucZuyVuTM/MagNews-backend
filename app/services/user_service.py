@@ -43,6 +43,9 @@ class UserService:
         if not user or not self.verify_password(password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Incorrect username or password")
 
+        if not user.is_active:
+            raise HTTPException(status_code=401, detail="User is deactivated")
+
         return self.create_access_token({"sub": str(user.id)})
 
     def get_current(self, current_user: User) -> UserResponse:

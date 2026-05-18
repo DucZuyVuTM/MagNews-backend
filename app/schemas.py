@@ -118,3 +118,39 @@ class SubscriptionResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+# Complaint Schemas
+class ComplaintCreate(BaseModel):
+    publication_id: int
+    reason: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=2000)
+
+
+class ComplaintStatusUpdate(BaseModel):
+    status: str
+    resolution_note: Optional[str] = Field(None, max_length=2000)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ComplaintResponse(BaseModel):
+    id: int
+    user_id: int
+    publication_id: int
+    reason: str
+    description: Optional[str] = None
+    status: str
+    resolution_note: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Search params for publications
+class PublicationListQuery(BaseModel):
+    skip: Optional[int] = None
+    limit: Optional[int] = None
+    type: Optional[str] = None
+    q: Optional[str] = None

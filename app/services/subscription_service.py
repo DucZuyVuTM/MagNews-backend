@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 
-from ..models import Subscription, Publication, User, SubscriptionStatus
+from ..models import Subscription, Publication, User, UserRole, SubscriptionStatus
 from ..schemas import SubscriptionCreate, SubscriptionResponse
 
 class SubscriptionService:
@@ -83,3 +83,24 @@ class SubscriptionService:
         subscription.status = SubscriptionStatus.CANCELLED
         subscription.auto_renew = False
         self.db.commit()
+
+    def block(self, subscription_id: int, current_user: User, reason: str | None = None) -> SubscriptionResponse:
+        if current_user.role != UserRole.ADMIN:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        if not current_user.is_active:
+            raise HTTPException(status_code=403, detail="User is deactivated")
+
+        subscription = self.db.query(Subscription).filter(
+            Subscription.id == subscription_id
+        ).first()
+        if not subscription:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+
+        if subscription.status == SubscriptionStatus.BLOCKED:
+            raise HTTPException(status_code=400, detail="Subscription is already blocked")
+
+        subscription.status = SubscriptionStatus.BLOCKED
+        subscription.auto_renew = False
+        self.db.commit()
+        self.db.refresh(subscription)
+        return SubscriptionResponse.model_validate(subscription)

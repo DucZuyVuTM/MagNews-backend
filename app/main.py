@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import users, publications, subscriptions
+from .routers import users, publications, subscriptions, complaints
 
 app = FastAPI(
     title="Subscription Management API",
@@ -32,6 +32,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(users.router)
 app.include_router(publications.router)
 app.include_router(subscriptions.router)
+app.include_router(complaints.router)
 
 @app.get("/")
 def root():
