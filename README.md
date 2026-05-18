@@ -73,6 +73,23 @@ docker run -p 8000:8000 --env-file .env magnews-backend
 
 ---
 
+## 🗄 Uploads (cover images)
+
+Обложки изданий хранятся в локальном файловом хранилище, смонтированном как Docker volume `magnews_uploads`.
+
+- Эндпоинт загрузки: `POST /api/uploads/cover` (multipart, доступ — `PROVIDER` и `ADMIN`).
+- Ограничения: JPEG / PNG / WebP, до 5 МБ.
+- Раздача: статика по `/static/covers/{uuid}.{ext}`.
+- Каталог внутри контейнера: `/app/uploads/covers/` (переопределяется через `UPLOAD_ROOT`).
+
+Пример запуска с volume:
+
+```bash
+docker run -p 8000:8000 --env-file .env \
+  -v magnews_uploads:/app/uploads \
+  magnews-backend
+```
+
 ## 📊 ERD
 
 ```bash
