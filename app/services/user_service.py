@@ -2,8 +2,15 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from typing import Callable
 
-from ..models import User
-from ..schemas import UserCreate, UserUpdate, UserResponse, ChangePassword, ChangePasswordResponse
+from ..models import User, UserRole
+from ..schemas import (
+    ChangePassword,
+    ChangePasswordResponse,
+    ProviderRegister,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 
 class UserService:
     def __init__(
@@ -29,6 +36,26 @@ class UserService:
             username=data.username,
             full_name=data.full_name,
             hashed_password=self.hash_password(data.password)
+        )
+        self.db.add(db_user)
+        self.db.commit()
+        self.db.refresh(db_user)
+        return UserResponse.model_validate(db_user)
+
+    def register_provider(self, data: ProviderRegister) -> UserResponse:
+        if self.db.query(User).filter(User.email == data.email).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        if self.db.query(User).filter(User.username == data.username).first():
+            raise HTTPException(status_code=400, detail="Username already taken")
+
+        db_user = User(
+            email=data.email,
+            username=data.username,
+            full_name=data.full_name,
+            hashed_password=self.hash_password(data.password),
+            role=UserRole.PROVIDER,
+            company_name=data.company_name,
+            inn=data.inn,
         )
         self.db.add(db_user)
         self.db.commit()

@@ -1,13 +1,16 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base
-from .routers import users, publications, subscriptions, complaints
+from .routers import users, publications, subscriptions, complaints, reviews
 
 app = FastAPI(
-    title="Subscription Management API",
-    description="API для управления подписками на журналы и газеты",
-    version="1.0.0"
+    title="MagNews Subscription Marketplace API",
+    description=(
+        "REST API маркетплейса подписок MagNews. "
+        "Сейчас на витрине — журналы, газеты и научные журналы; "
+        "архитектура каталога расширяется на цифровой контент."
+    ),
+    version="1.1.0",
 )
 
 PRODUCTION_ORIGIN = os.getenv("PRODUCTION_ORIGIN", "http://localhost:5173")
@@ -25,14 +28,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tables
-Base.metadata.create_all(bind=engine)
-
 # Include routers
 app.include_router(users.router)
 app.include_router(publications.router)
 app.include_router(subscriptions.router)
 app.include_router(complaints.router)
+app.include_router(reviews.router)
 
 @app.get("/")
 def root():

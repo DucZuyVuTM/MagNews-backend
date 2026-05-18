@@ -3,7 +3,15 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import User
-from ..schemas import UserCreate, UserUpdate, UserResponse, ChangePassword, ChangePasswordResponse, Token
+from ..schemas import (
+    ChangePassword,
+    ChangePasswordResponse,
+    ProviderRegister,
+    Token,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 from ..auth import get_current_user, get_password_hash, verify_password, create_access_token
 from ..services.user_service import UserService
 
@@ -23,6 +31,18 @@ def register(
     service: UserService = Depends(get_user_service)
 ):
     return service.create(user)
+
+
+@router.post(
+    "/register-provider",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_provider(
+    provider: ProviderRegister,
+    service: UserService = Depends(get_user_service),
+):
+    return service.register_provider(provider)
 
 @router.post("/login", response_model=Token)
 def login(

@@ -5,7 +5,12 @@ from typing import List, Optional
 from ..database import get_db
 from ..auth import get_current_user
 from ..models import User, PublicationType
-from ..schemas import PublicationCreate, PublicationUpdate, PublicationResponse
+from ..schemas import (
+    ModerationDecision,
+    PublicationCreate,
+    PublicationResponse,
+    PublicationUpdate,
+)
 from ..services.publication_service import PublicationService
 
 router = APIRouter(prefix="/api/publications", tags=["publications"])
@@ -38,6 +43,22 @@ def list_all_for_admin(
 ):
     return service.get_list_admin(current_user)
 
+
+@router.get("/pending", response_model=List[PublicationResponse])
+def list_pending(
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return service.list_pending(current_user)
+
+
+@router.get("/mine", response_model=List[PublicationResponse])
+def list_mine(
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return service.list_mine(current_user)
+
 @router.get("/{publication_id}", response_model=PublicationResponse)
 def get_publication(
     publication_id: int,
@@ -62,3 +83,13 @@ def delete_publication(
     service: PublicationService = Depends(get_publication_service)
 ):
     return service.soft_delete(publication_id, current_user)
+
+
+@router.post("/{publication_id}/moderate", response_model=PublicationResponse)
+def moderate_publication(
+    publication_id: int,
+    decision: ModerationDecision,
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return service.moderate(publication_id, decision, current_user)

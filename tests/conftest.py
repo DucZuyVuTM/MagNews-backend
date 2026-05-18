@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 
 from app.main import app
 from app.database import SessionLocal, Base, engine, get_db
-from app.models import User, UserRole, Publication, PublicationType
+from app.models import (
+    ModerationStatus,
+    Publication,
+    PublicationType,
+    User,
+    UserRole,
+)
 from app.auth import get_password_hash
 
 
@@ -112,9 +118,39 @@ def sample_publication(db_session: Session) -> Publication:
         cover_image_url=None,
         is_visible=True,
         is_available=True,
+        moderation_status=ModerationStatus.APPROVED,
         created_at=datetime.now(timezone.utc),
     )
     db_session.add(pub)
     db_session.commit()
     db_session.refresh(pub)
     return pub
+
+
+@pytest.fixture
+def provider_user(db_session: Session) -> User:
+    user = User(
+        email="provider@example.com",
+        username="provider_user",
+        full_name="Provider Co",
+        hashed_password=get_password_hash("ProviderPass123"),
+        role=UserRole.PROVIDER,
+        is_active=True,
+        company_name="Provider LLC",
+        inn="7700000000",
+        created_at=datetime.now(timezone.utc),
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def provider_token(client: TestClient, provider_user: User) -> str:
+    return _login_token(client, provider_user.username, "ProviderPass123")
+
+
+@pytest.fixture
+def provider_auth_headers(provider_token: str) -> dict:
+    return {"Authorization": f"Bearer {provider_token}"}

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models import Publication, PublicationType
+from app.models import ModerationStatus, Publication, PublicationType
 
 
 def _seed_publications(db_session: Session, count: int = 12):
@@ -29,6 +29,7 @@ def _seed_publications(db_session: Session, count: int = 12):
             cover_image_url=None,
             is_visible=True,
             is_available=True,
+            moderation_status=ModerationStatus.APPROVED,
             created_at=datetime.now(timezone.utc),
         )
         db_session.add(pub)
@@ -58,6 +59,7 @@ class TestCatalogListing:
             price_yearly=10.0,
             is_visible=False,
             is_available=True,
+            moderation_status=ModerationStatus.APPROVED,
         )
         db_session.add(hidden)
         db_session.commit()

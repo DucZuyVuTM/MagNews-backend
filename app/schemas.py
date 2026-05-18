@@ -22,6 +22,12 @@ class UserCreate(UserBase):
             raise HTTPException(status_code=400, detail="Password must contain at least 1 number")
         return v
 
+
+class ProviderRegister(UserCreate):
+    company_name: str = Field(..., min_length=1, max_length=200)
+    inn: Optional[str] = Field(None, max_length=20)
+
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -29,13 +35,15 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     full_name: Optional[str] = None
-    
+
     model_config = ConfigDict(extra="forbid")
 
 class UserResponse(UserBase):
     id: int
     role: str
     is_active: bool
+    company_name: Optional[str] = None
+    inn: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -90,9 +98,20 @@ class PublicationResponse(PublicationBase):
     id: int
     is_visible: bool
     is_available: bool
+    provider_id: Optional[int] = None
+    moderation_status: str
+    moderation_note: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ModerationDecision(BaseModel):
+    decision: str = Field(..., pattern="^(approve|reject)$")
+    note: Optional[str] = Field(None, max_length=2000)
+
+    model_config = ConfigDict(extra="forbid")
+
 
 # Subscription Schemas
 class SubscriptionCreate(BaseModel):
@@ -146,6 +165,30 @@ class ComplaintResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Review schemas
+class ReviewCreate(BaseModel):
+    publication_id: int
+    rating: int = Field(..., ge=1, le=5)
+    text: Optional[str] = Field(None, max_length=2000)
+
+
+class ReviewResponse(BaseModel):
+    id: int
+    user_id: int
+    publication_id: int
+    rating: int
+    text: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicationRatingSummary(BaseModel):
+    publication_id: int
+    average_rating: Optional[float] = None
+    review_count: int
 
 
 # Search params for publications
