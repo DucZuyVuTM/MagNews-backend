@@ -1,17 +1,25 @@
 # 📰 MagNews Backend Documentation
 
-Добро пожаловать в документацию серверной части проекта **MagNews**! 
+Серверная часть маркетплейса подписок **MagNews**. Сейчас на витрине — журналы, газеты и научные журналы; архитектура каталога расширяется на цифровой контент.
 
-Этот репозиторий содержит REST API, написанное на **Python** с использованием фреймворка **FastAPI**, **SQLAlchemy** (ORM) и базы данных **PostgreSQL**.
+REST API на **Python** с **FastAPI**, **SQLAlchemy** (ORM) и **PostgreSQL**.
+
+## 🧩 Роли в системе
+
+- **Подписчик (USER)** — оформляет и отменяет подписки, оставляет отзывы, подаёт жалобы.
+- **Издатель (PROVIDER)** — регистрируется как поставщик контента, публикует издания, видит статус модерации.
+- **Администратор (ADMIN)** — модерирует публикации, обрабатывает жалобы, блокирует подписки.
 
 ## 🛠 Технологический стек
 
-- **Язык**: Python 3.9+
+- **Язык**: Python 3.10+
 - **Фреймворк**: [FastAPI](https://fastapi.tiangolo.com/) (включая Uvicorn)
 - **База данных**: PostgreSQL (psycopg2)
 - **ORM**: SQLAlchemy 2.0
+- **Миграции**: Alembic
 - **Аутентификация**: JWT (python-jose, bcrypt, passlib)
-- **Дополнительно**: eralchemy2 для генерации ER-диаграмм БД.
+- **Документация**: Sphinx + autodoc, OpenAPI/Swagger
+- **Дополнительно**: eralchemy2 для ER-диаграммы.
 
 ---
 
@@ -26,50 +34,37 @@ cd MagNews-backend
 
 ### 2. Настройка окружения
 
-Создайте виртуальное окружение и активируйте его:
-
 ```bash
 python -m venv venv
-
-# Для Windows
-venv\Scripts\activate
-# Для Linux/macOS
-source venv/bin/activate
-```
-
-Установите необходимые зависимости:
-
-```bash
+source venv/bin/activate  # macOS / Linux
+# venv\Scripts\activate    # Windows
 pip install -r requirements.txt
 ```
 
-### 3. Настройка переменных окружения
-
-В корневой директории проекта скопируйте файл `.env.example` в `.env` и настройте данные для подключения к вашей локальной базе PostgreSQL:
+### 3. Переменные окружения
 
 ```bash
 cp .env.example .env
+# заполнить DATABASE_URL и SECRET_KEY
 ```
 
-*Убедитесь, что внутри `.env` указаны правильные доступы к базе данных.*
+### 4. Миграции базы данных
 
-### 4. Запуск приложения
+```bash
+DATABASE_URL=postgresql://... alembic upgrade head
+```
 
-Для запуска сервера разработчика используйте `uvicorn` (он установился вместе с зависимостями):
+### 5. Запуск приложения
 
 ```bash
 uvicorn app.main:app --reload
 ```
-*(Примечание: путь `app.main:app` может немного отличаться в зависимости от того, как назван главный файл в папке `app`. Если сервер запускается иначе, обновите эту команду).*
 
-После успешного запуска документация к API (Swagger UI) будет доступна по адресу:
-👉 **http://127.0.0.1:8000/docs**
+Swagger UI — http://127.0.0.1:8000/docs
 
 ---
 
-## 🐳 Запуск через Docker
-
-В проекте настроен `Dockerfile`, поэтому вы можете легко собрать и запустить контейнер:
+## 🐳 Docker
 
 ```bash
 docker build -t magnews-backend .
@@ -78,19 +73,36 @@ docker run -p 8000:8000 --env-file .env magnews-backend
 
 ---
 
-## 📊 Структура базы данных (ERD)
+## 🗄 Uploads (cover images)
 
-В проекте есть скрипт для автоматической генерации ER-диаграммы базы данных (`gen_erd.py`). 
-Вы можете сгенерировать актуальную схему (`diagram.png`) выполнив:
+Обложки изданий хранятся в локальном файловом хранилище, смонтированном как Docker volume `magnews_uploads`.
+
+- Эндпоинт загрузки: `POST /api/uploads/cover` (multipart, доступ — `PROVIDER` и `ADMIN`).
+- Ограничения: JPEG / PNG / WebP, до 5 МБ.
+- Раздача: статика по `/static/covers/{uuid}.{ext}`.
+- Каталог внутри контейнера: `/app/uploads/covers/` (переопределяется через `UPLOAD_ROOT`).
+
+Пример запуска с volume:
+
+```bash
+docker run -p 8000:8000 --env-file .env \
+  -v magnews_uploads:/app/uploads \
+  magnews-backend
+```
+
+## 📊 ERD
 
 ```bash
 python gen_erd.py
 ```
 
+Актуальная схема — `diagram.png`. Покрывает: User, Publication, Subscription, Complaint, Review.
+
 ## 🗂 Структура проекта
 
-- `/app` — Основной код приложения (модели, схемы, роуты API).
-- `requirements.txt` — Зависимости проекта.
-- `Dockerfile` — Инструкции для сборки Docker-образа.
-- `.env.example` — Шаблон файла конфигурации окружения.
-- `gen_erd.py` — Скрипт генерации диаграммы базы данных.
+- `app/models.py` — доменные модели (User, Publication, Subscription, Complaint, Review).
+- `app/routers/` — REST-эндпоинты (users, publications, subscriptions, complaints, reviews).
+- `app/services/` — бизнес-логика, изолированная от транспорта.
+- `alembic/` — миграции схемы данных.
+- `tests/` — pytest, sqlite в файле для изоляции.
+- `docs/` — Sphinx-документация (autodoc).
